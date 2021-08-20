@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="./assets/main.css">
+    <link rel="stylesheet" href="./assets/font/fontawesome-free-5.15.3-web/css/all.css">
+    <title>My Music Playlist</title>
+</head>
+<body>
+    <div class="music-app">
+        <div class="dashboard">
+            <header>
+                <i class="back-icon fas fa-arrow-left"></i>
+                <h5 class="title">Playing Now</h5>
+                <div class="reaction">
+                    <i class="like-icon far fa-heart"></i>
+                </div>
+            </header>
+            <div class="cd">
+                <div class="cd-avatar" style="background-image:url('https://i.ytimg.com/vi/a0qC7lG3Vfc/maxresdefault.jpg')">      
+                </div>
+            </div>
+            <div class="info">
+                <h3 class="name-song">I Love You</h3>
+                <p class="singer-song">Stephanie Poetri</p>
+            </div>
+            <div class="control">
+                <div class="btn btn-repeat">
+                    <i class="fas fa-redo-alt"></i>
+                </div>
+                <div class="btn btn-pre">
+                    <i class="fas fa-backward"></i>
+                </div>
+                <div class="btn btn-play-pause">
+                    <i class="icon-play fas fa-play fas"></i>
+                    <i class="icon-pause fas fa-pause"></i>
+                </div>
+                <div class="btn btn-next">
+                    <i class="fas fa-forward"></i>
+                </div>
+                <div class="btn btn-random">
+                    <i class="fas fa-random"></i>
+                </div>
+            </div>
+            <input type="range" value="0" step="1" min="0" max="100" class="progress">
+            <audio id="audio" src=""></audio>
+        </div>
+        <div class="playlist">
+        </div>
+    </div>
+    <script>
+        const $ = document.querySelector.bind(document)
+        const $$= document.querySelectorAll.bind(document)
+
+        const appMusic = $('.music-app')
+        const reaction=$('.reaction i')
+        const cd=$('.cd')
+        const cdAvatar=$('.cd-avatar')
+        const playlist = $('.playlist')
+        const btnPlayPause = $('.btn-play-pause')
+        const btnNext = $('.btn-next')
+        const btnPre =$('.btn-pre')
+        const btnRandom =$('.btn-random')
+        const btnRepeat =$('.btn-repeat')
+        const name = $(".info .name-song");
+        const singer =$(".info .singer-song")
+        const audio = $('#audio');
+
+
+        const app = {
+            currentIndex: 0,
+            isPlaying: false,
+            isRandom: false,
+            isRepeat: false,
+
+            songs: [
+                {
+                    name:"I Love You 3000",
+                    singer: "Stephanie Poetri",
+                    path: "./assets/audio/3000.mp3",
+                    img: "https://i.ytimg.com/vi/a0qC7lG3Vfc/maxresdefault.jpg"
+                },
+                {
+                    name: "2002",
+                    singer: "Anne Marie",
+                    path:"./assets/audio/2002.mp3",
+                    img:"https://hypeddit-gates-prod.s3.amazonaws.com/qq9x4h_coverartmanual"
+                },
+                {
+                    name: "Waiting For Love",
+                    singer: "Avicii",
+                    path:"./assets/audio/WaitingForLove.mp3",
+                    img:"https://img.youtube.com/vi/Hmbm3G-Q444/mqdefault.jpg"
+                },
+                {
+                    name: "Từ Đó",
+                    singer: "Phan Mạnh Quỳnh",
+                    path:"./assets/audio/TuDo.mp3",
+                    img:"https://getbootstrap.com.vn/blog/wp-content/uploads/2019/12/T%E1%BB%AB-%C4%91%C3%B3-Phan-M%E1%BA%A1nh-Qu%E1%BB%B3nh.jpg"
+                },
+                {
+                    name:"The Nights",
+                    singer: "Avicii",
+                    path:"./assets/audio/TheNights.mp3",
+                    img:"https://img.youtube.com/vi/pLCBf1NljyM/mqdefault.jpg"
+                },
+                {
+                    name:"Dancing With Your Ghost",
+                    singer: "Sasha Sloan",
+                    path:"./assets/audio/DancingWithYourGhost.mp3",
+                    img:"https://avatar-nct.nixcdn.com/song/2019/12/04/1/8/7/2/1575448005795.jpg"
+                },
+                {
+                    name:"Comethru",
+                    singer:"Jeremy Zucker",
+                    path:"./assets/audio/Comethru.mp3",
+                    img:"https://music.voca.vn/assets/img/img_song/Comethru.jpg"
+                },
+                {
+                    name: "Something Just Like This",
+                    singer: " The Chainsmokers, Coldplay",
+                    path:"./assets/audio/SomethingJustLikeThis.mp3",
+                    img:"https://file.tinnhac.com/resize/600x-/music/2017/06/15/something-just-like--ebef.png"
+                },
+                {
+                    name:"Đường Tôi Chở Em Về",
+                    singer:"Bùi Trung Lương",
+                    path:"./assets/audio/DuongTaChoEmVe.mp3",
+                    img:"https://o.rada.vn/data/image/2021/06/16/loi-bai-hat-duong-toi-cho-em-ve-700.jpg"
+                }
+
+            ],
+            //render playlist
+            render: function(){
+                const htmls = this.songs.map(function(song){
+                    return `
+                    <div class="song">
+                    <div class="avatar">
+                        <div class="avatar-img" style="background-image: url('${song.img}')"></div>
+                    </div> 
+                    <div class="body">
+                        <h3 class="title">${song.name}</h3>
+                        <p class="singer">${song.singer}</p>
+                    </div>
+                    <div class="options">
+                        <i class="fas fa-ellipsis-h"></i>
+                    </div>
+                    </div>
+                    `
+            })
+            playlist.innerHTML = htmls.join('')
+            },
+
+            defineProperties: function() {
+                Object.defineProperty(this,'currentSong',{
+                    get: function() {
+                        return this.songs[this.currentIndex]
+                    }
+                })
+            },
+
+            handleEvents: function() {
+                const _this =this;
+                const cdWidth = cd.offsetWidth;
+
+                //tha reaction
+                reaction.onclick=function(){
+                    this.classList.toggle("liked-icon");
+                    this.classList.toggle("fas");
+                }
+
+                //xoay cd
+                const cdAvatarAnimate = cdAvatar.animate([{transform: "rotate(360deg)"}],{
+                    duration: 10000,
+                    iterations: Infinity
+                });
+                cdAvatarAnimate.pause()
+                
+                //phong to/thu nho cd
+                document.onscroll = function(){
+                    const scrollTop = window.scrollY;
+                    const newCdWidth = cdWidth - scrollTop;
+
+                    cd.style.width = newCdWidth>0? newCdWidth + "px" : 0;
+                    cd.style.opacity = newCdWidth/cdWidth;
+                }
+
+                //play/pause
+                btnPlayPause.onclick = function(){
+                    if(_this.isPlaying){
+                        audio.pause();
+                    }
+                    else{
+                        audio.play();
+                    }       
+                }
+                //khi song dang play
+                audio.onplay = function() {
+                    _this.isPlaying = true;
+                    appMusic.classList.add('playing');
+                    cdAvatarAnimate.play();
+                }
+                audio.onpause = function() {
+                    _this.isPlaying=false;
+                    appMusic.classList.remove('playing');
+                    cdAvatarAnimate.pause();
+                }
+
+                //random
+                btnRandom.onclick = function(){
+                    _this.isRandom = !_this.isRandom;
+                    this.classList.toggle('active');
+                    
+                }
+
+                //chuyen bai next/pre
+                btnNext.onclick = function(){
+                    if(_this.isRandom){
+                        _this.currentIndex = Math.floor(Math.random() * (_this.songs.length));
+                    }
+                    else{
+                        _this.nextSong();
+                    }
+                    _this.loadCurrentSong();
+                    audio.play();
+                }
+                btnPre.onclick = function(){
+                    if(_this.isRandom){
+                        _this.currentIndex = Math.floor(Math.random() * (_this.songs.length));
+                        console.log(_this.currentIndex);
+                    }
+                    else{
+                        _this.preSong();
+                    }
+                    _this.loadCurrentSong();
+                    audio.play();
+                    
+                }
+
+
+
+            },
+            loadCurrentSong: function() {
+                name.textContent =  this.currentSong.name
+                singer.textContent = this.currentSong.singer
+                cdAvatar.style.backgroundImage = `url('${this.currentSong.img}')`
+                audio.src= this.currentSong.path
+            },
+            
+            nextSong: function(){
+                if( this.currentIndex>=this.songs.length-1){
+                    this.currentIndex=0;
+                }
+                else{
+                    this.currentIndex++;
+                }
+                    
+            },
+            preSong: function(){
+                if( this.currentIndex!= 0){
+                    this.currentIndex--;
+                }
+                else{
+                    this.currentIndex=this.songs.length-1;
+                }
+            },
+            start: function(){
+                this.defineProperties()
+                this.handleEvents()
+                this.loadCurrentSong()
+                this.render()
+            }
+            
+
+        }
+
+
+        app.start()
+    </script>
+</body>
+</html>
