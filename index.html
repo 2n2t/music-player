@@ -11,40 +11,43 @@
 <body>
     <div class="music-app">
         <div class="dashboard">
-            <header>
-                <i class="back-icon fas fa-arrow-left"></i>
-                <h5 class="title">Playing Now</h5>
-                <div class="reaction">
-                    <i class="like-icon far fa-heart"></i>
+            <div class="body">
+
+                <header>
+                    <i class="back-icon fas fa-arrow-left"></i>
+                    <h5 class="title">Playing Now</h5>
+                    <div class="reaction">
+                        <i class="like-icon far fa-heart"></i>
+                    </div>
+                </header>
+                <div class="cd">
+                    <div class="cd-avatar" style="background-image:url('https://i.ytimg.com/vi/a0qC7lG3Vfc/maxresdefault.jpg')">      
+                    </div>
                 </div>
-            </header>
-            <div class="cd">
-                <div class="cd-avatar" style="background-image:url('https://i.ytimg.com/vi/a0qC7lG3Vfc/maxresdefault.jpg')">      
+                <div class="info">
+                    <h3 class="name-song">I Love You</h3>
+                    <p class="singer-song">Stephanie Poetri</p>
                 </div>
+                <div class="control">
+                    <div class="btn btn-repeat">
+                        <i class="fas fa-redo-alt"></i>
+                    </div>
+                    <div class="btn btn-pre">
+                        <i class="fas fa-backward"></i>
+                    </div>
+                    <div class="btn btn-play-pause">
+                        <i class="icon-play fas fa-play fas"></i>
+                        <i class="icon-pause fas fa-pause"></i>
+                    </div>
+                    <div class="btn btn-next">
+                        <i class="fas fa-forward"></i>
+                    </div>
+                    <div class="btn btn-random">
+                        <i class="fas fa-random"></i>
+                    </div>
+                </div>
+                <input type="range" value="0" step="0.5" min="0" max="100" class="progress">
             </div>
-            <div class="info">
-                <h3 class="name-song">I Love You</h3>
-                <p class="singer-song">Stephanie Poetri</p>
-            </div>
-            <div class="control">
-                <div class="btn btn-repeat">
-                    <i class="fas fa-redo-alt"></i>
-                </div>
-                <div class="btn btn-pre">
-                    <i class="fas fa-backward"></i>
-                </div>
-                <div class="btn btn-play-pause">
-                    <i class="icon-play fas fa-play fas"></i>
-                    <i class="icon-pause fas fa-pause"></i>
-                </div>
-                <div class="btn btn-next">
-                    <i class="fas fa-forward"></i>
-                </div>
-                <div class="btn btn-random">
-                    <i class="fas fa-random"></i>
-                </div>
-            </div>
-            <input type="range" value="0" step="1" min="0" max="100" class="progress">
             <audio id="audio" src=""></audio>
         </div>
         <div class="playlist">
@@ -67,13 +70,15 @@
         const name = $(".info .name-song");
         const singer =$(".info .singer-song")
         const audio = $('#audio');
-
-
+        const range = $('input');
+        const song =$('.playlist');
+        
         const app = {
             currentIndex: 0,
             isPlaying: false,
             isRandom: false,
             isRepeat: false,
+            indexRandom:0,
 
             songs: [
                 {
@@ -134,9 +139,11 @@
             ],
             //render playlist
             render: function(){
-                const htmls = this.songs.map(function(song){
+                const htmls = this.songs.map(function(song,index){
                     return `
-                    <div class="song">
+                    <div class="song ${
+                        index === app.currentIndex ? "active":""
+                    }" data-index="${index}">
                     <div class="avatar">
                         <div class="avatar-img" style="background-image: url('${song.img}')"></div>
                     </div> 
@@ -160,10 +167,25 @@
                     }
                 })
             },
-
+            random: function(){
+                var arr=[];
+                for(let i=0;i<this.songs.length;i++){
+                    arr.push(i);
+                };
+                ranNums = [],
+                i = arr.length,
+                j = 0;
+                while (i--) {
+                    j = Math.floor(Math.random() * (i+1));
+                    ranNums.push(arr[j]);
+                    arr.splice(j,1);
+                }
+                return ranNums;
+            },
             handleEvents: function() {
                 const _this =this;
                 const cdWidth = cd.offsetWidth;
+                var randomArray = [];
 
                 //tha reaction
                 reaction.onclick=function(){
@@ -207,40 +229,96 @@
                     appMusic.classList.remove('playing');
                     cdAvatarAnimate.pause();
                 }
-
+                
+                // When the song progress changes
+                audio.ontimeupdate = function(){
+                    if(audio.duration){
+                        const progressPer = Math.floor(
+                            (audio.currentTime/audio.duration)*100
+                        );
+                        range.value = progressPer;
+                    }
+                }
+                //halding when seek
+                range.onchange=function(e){
+                    const seekTime =(audio.duration/100)*e.target.value;
+                    console.log(seekTime);
+                    audio.currentTime = seekTime;
+                }
                 //random
                 btnRandom.onclick = function(){
                     _this.isRandom = !_this.isRandom;
-                    this.classList.toggle('active');
-                    
+                    this.classList.toggle('active');  
+                    randomArray=[];
+                    randomArray=_this.random();
                 }
-
+                //Repeat
+                btnRepeat.onclick = function(){
+                    _this.isRepeat=!_this.isRepeat;
+                    this.classList.toggle('active');
+                }
                 //chuyen bai next/pre
                 btnNext.onclick = function(){
                     if(_this.isRandom){
-                        _this.currentIndex = Math.floor(Math.random() * (_this.songs.length));
+                        if(_this.indexRandom>=randomArray.length){
+                            _this.indexRandom=0;
+                        }
+                        else{
+                        _this.currentIndex = randomArray[_this.indexRandom++];
+                        }
                     }
                     else{
                         _this.nextSong();
                     }
                     _this.loadCurrentSong();
+                    _this.render();
+                    _this.scrollToActiveSong();
                     audio.play();
                 }
+                
                 btnPre.onclick = function(){
                     if(_this.isRandom){
-                        _this.currentIndex = Math.floor(Math.random() * (_this.songs.length));
-                        console.log(_this.currentIndex);
+                        if(_this.indexRandom>=randomArray.length){
+                            _this.indexRandom=0;
+                        }
+                        else{
+                        _this.currentIndex = randomArray[_this.indexRandom++];
+                        }
                     }
                     else{
                         _this.preSong();
                     }
                     _this.loadCurrentSong();
-                    audio.play();
-                    
+                    _this.render();
+                    _this.scrollToActiveSong();
+                    audio.play(); 
                 }
-
-
-
+                audio.onended = function(){
+                    if(_this.isRepeat){
+                        audio.play();
+                    }
+                    else{
+                        btnNext.click();
+                    }
+                }
+                playlist.onclick = function(e){
+                    const songNode = e.target.closest('.song:not(.active)');
+                    if(songNode){
+                        _this.currentIndex=Number(songNode.getAttribute('data-index'));
+                        console.log(_this.currentIndex)
+                        _this.loadCurrentSong();
+                        _this.render();
+                        audio.play();
+                    }
+                }
+            },
+            scrollToActiveSong: function () {
+                setTimeout(() => {
+                    $(".song.active").scrollIntoView({
+                    behavior: "smooth",
+                    block: "nearest"
+                    });
+                }, 300);
             },
             loadCurrentSong: function() {
                 name.textContent =  this.currentSong.name
@@ -272,11 +350,7 @@
                 this.loadCurrentSong()
                 this.render()
             }
-            
-
         }
-
-
         app.start()
     </script>
 </body>
