@@ -239,8 +239,14 @@
                         range.value = progressPer;
                     }
                 }
+                audio.onloadstart = function () {
+                if ( $('.song.active')) {
+                    $('.song.active').classList.remove('active');
+                }
+                $$('.song')[_this.currentIndex].classList.add('active');
+                }
                 //halding when seek
-                range.onchange=function(e){
+                range.oninput=function(e){
                     const seekTime =(audio.duration/100)*e.target.value;
                     console.log(seekTime);
                     audio.currentTime = seekTime;
@@ -251,7 +257,11 @@
                     this.classList.toggle('active');  
                     randomArray=[];
                     randomArray=_this.random();
+                    randomArray.push(_this.currentIndex);
+                    randomArray.splice(randomArray.indexOf(_this.currentIndex),1);
+                    console.log(randomArray)
                 }
+
                 //Repeat
                 btnRepeat.onclick = function(){
                     _this.isRepeat=!_this.isRepeat;
@@ -264,7 +274,7 @@
                             _this.indexRandom=0;
                         }
                         else{
-                        _this.currentIndex = randomArray[_this.indexRandom++];
+                            _this.currentIndex = randomArray[_this.indexRandom++];
                         }
                     }
                     else{
@@ -303,28 +313,38 @@
                 }
                 playlist.onclick = function(e){
                     const songNode = e.target.closest('.song:not(.active)');
-                    if(songNode){
-                        _this.currentIndex=Number(songNode.getAttribute('data-index'));
-                        console.log(_this.currentIndex)
-                        _this.loadCurrentSong();
-                        _this.render();
-                        audio.play();
+                    if (!e.target.closest('.options')) {
+                        if(songNode){
+                            _this.currentIndex=Number(songNode.getAttribute('data-index'));
+                            _this.loadCurrentSong();
+                            audio.play();
+                        }
                     }
                 }
             },
             scrollToActiveSong: function () {
                 setTimeout(() => {
-                    $(".song.active").scrollIntoView({
-                    behavior: "smooth",
-                    block: "nearest"
-                    });
+                    if (this.currentIndex <=2){
+                        $(".song.active").scrollIntoView({
+                        behavior: "smooth",
+                        block: "end"
+                        });
+                    }
+                    else {
+                        $(".song.active").scrollIntoView({
+                        behavior: "smooth",
+                        block: "center"
+                        });
+                    }
                 }, 300);
             },
             loadCurrentSong: function() {
                 name.textContent =  this.currentSong.name
                 singer.textContent = this.currentSong.singer
                 cdAvatar.style.backgroundImage = `url('${this.currentSong.img}')`
-                audio.src= this.currentSong.path
+                audio.src= this.currentSong.path;
+                
+                
             },
             
             nextSong: function(){
